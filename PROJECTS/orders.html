@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orders — D&G Apparel</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Shantell+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+/* ===== TRACK MODAL ===== */
+.track-modal{position:fixed;inset:0;z-index:1400;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity 0.3s ease;}
+.track-modal.open{opacity:1;pointer-events:all;}
+.track-modal-box{background:white;border-radius:24px;width:100%;max-width:580px;max-height:90vh;overflow-y:auto;position:relative;box-shadow:0 24px 80px rgba(0,0,0,0.22);transform:translateY(28px);transition:transform 0.3s ease;}
+.track-modal.open .track-modal-box{transform:translateY(0);}
+.track-modal-close{position:absolute;top:16px;right:16px;width:34px;height:34px;border-radius:50%;background:var(--light-red);color:var(--red);font-size:1rem;display:flex;align-items:center;justify-content:center;z-index:10;transition:all 0.2s;cursor:pointer;border:none;}
+.track-modal-close:hover{background:var(--red);color:white;}
+/* HEADER */
+.track-modal-header{padding:32px 32px 20px;border-bottom:1px solid var(--border);}
+.track-modal-header .order-tag{font-size:0.7rem;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--red);margin-bottom:6px;}
+.track-modal-header h2{font-size:1.35rem;font-weight:800;margin-bottom:4px;color:var(--text-dark);}
+.track-modal-header .order-meta{font-size:0.8rem;color:var(--text-light);}
+/* STATUS BANNER */
+.status-banner{display:flex;align-items:center;gap:14px;background:var(--light-red);margin:20px 32px 0;padding:16px 20px;border-radius:16px;}
+.status-banner-icon{font-size:2rem;flex-shrink:0;}
+.status-banner-info h4{font-size:0.95rem;font-weight:700;color:var(--text-dark);margin-bottom:3px;}
+.status-banner-info p{font-size:0.78rem;color:var(--text-mid);margin:0;}
+.status-banner .order-status{margin-left:auto;flex-shrink:0;}
+/* TRACKER IN MODAL */
+.track-modal-tracker{padding:20px 32px 0;}
+/* SECTION TITLE */
+.tms-title{font-size:0.72rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--text-mid);padding:24px 32px 10px;}
+/* TIMELINE */
+.timeline{padding:0 32px;position:relative;}
+.timeline::before{content:'';position:absolute;left:51px;top:0;bottom:0;width:2px;background:var(--border);}
+.tl-item{display:flex;gap:16px;align-items:flex-start;margin-bottom:20px;position:relative;}
+.tl-dot{width:40px;height:40px;border-radius:50%;background:var(--cream);border:3px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;position:relative;z-index:1;transition:all 0.3s;}
+.tl-item.done .tl-dot{background:var(--red);border-color:var(--red);font-size:0.9rem;box-shadow:0 4px 14px rgba(194,133,140,0.4);}
+.tl-item.active-step .tl-dot{background:white;border-color:var(--red);animation:pulse-ring 1.6s infinite;}
+@keyframes pulse-ring{0%,100%{box-shadow:0 0 0 4px rgba(194,133,140,0.25);}50%{box-shadow:0 0 0 9px rgba(194,133,140,0.08);}}
+.tl-item.pending .tl-dot{opacity:0.45;}
+.tl-body{padding-top:6px;}
+.tl-body h4{font-size:0.88rem;font-weight:700;color:var(--text-dark);margin-bottom:3px;}
+.tl-body p{font-size:0.78rem;color:var(--text-mid);margin:0 0 4px;line-height:1.5;}
+.tl-time{font-size:0.72rem;color:var(--text-light);font-style:italic;}
+.tl-item.pending .tl-body h4,.tl-item.pending .tl-body p{opacity:0.45;}
+/* ITEMS */
+.tm-items{display:flex;gap:10px;flex-wrap:wrap;padding:0 32px 20px;}
+.tm-thumb{display:flex;flex-direction:column;align-items:center;gap:6px;}
+.tm-thumb img{width:68px;height:68px;border-radius:12px;object-fit:cover;border:1px solid var(--border);}
+.tm-thumb span{font-size:0.67rem;color:var(--text-mid);text-align:center;max-width:76px;line-height:1.3;}
+.tm-thumb strong{font-size:0.7rem;color:var(--red);font-weight:700;}
+/* SUMMARY */
+.track-summary{background:var(--cream);border-radius:14px;margin:0 32px;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;}
+.track-summary span{font-size:0.82rem;color:var(--text-mid);}
+.track-summary strong{font-size:1.05rem;color:var(--red);font-weight:800;}
+/* MODAL ACTIONS */
+.tm-actions{display:flex;gap:10px;padding:20px 32px 32px;flex-wrap:wrap;}
+.tm-actions button{flex:1;min-width:120px;}
+/* SEARCH BAR */
+.track-search-wrap{max-width:900px;margin:0 auto;padding:32px 24px 0;}
+.track-search-bar{display:flex;gap:12px;align-items:center;background:white;border-radius:20px;padding:20px 24px;box-shadow:0 2px 16px rgba(0,0,0,0.06);border:1px solid var(--border);flex-wrap:wrap;}
+.track-search-bar input{flex:1;min-width:180px;margin:0;}
+/* STATUS COLORS */
+.status-placed{background:#fff3cd;color:#856404;}
+.status-shipped{background:#cce5ff;color:#004085;}
+.status-transit{background:#e2d9f3;color:#5a2d82;}
+.status-delivered{background:#d4edda;color:#155724;}
+.status-cancelled{background:#f8d7da;color:#721c24;}
+/* CHECKOUT GRID */
+.checkout-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+.cancelled-banner{background:#fff5f5;border-radius:12px;padding:14px 18px;margin:16px 0;color:#721c24;font-size:0.85rem;font-weight:600;}
+.order-actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;}
+@media(max-width:600px){
+  .checkout-grid{grid-template-columns:1fr!important;}
+  .span-2{grid-column:span 1!important;}
+  .track-modal-header,.track-modal-tracker,.tms-title,.timeline,.tm-items,.track-summary,.tm-actions{padding-left:20px;padding-right:20px;}
+  .timeline::before{left:39px;}
+  .status-banner{flex-wrap:wrap;}
+  .status-banner .order-status{margin-left:0;}
+}
+</style>
+</head>
+<body>
+
+<div id="overlay" class="overlay" onclick="closeAllModals()"></div>
+
+<!-- TRACK ORDER MODAL -->
+<div id="trackModal" class="track-modal">
+  <div class="track-modal-box" id="trackModalContent"></div>
+</div>
+
+<!-- CART SIDEBAR -->
+<div id="cartSidebar" class="cart-sidebar">
+  <div class="cart-header"><h3>Your Bag</h3><button class="close-btn" onclick="toggleCart()">✕</button></div>
+  <div id="cartItems" class="cart-items"></div>
+  <div id="cartFooter" class="cart-footer" style="display:none">
+    <div class="cart-subtotal"><span>Subtotal</span><span id="cartTotal">₱0</span></div>
+    <button class="btn-primary full-width" onclick="renderCheckout()">Checkout</button>
+    <button class="btn-outline full-width" onclick="toggleCart()">Continue Shopping</button>
+  </div>
+</div>
+
+<!-- AUTH MODAL -->
+<div id="authModal" class="modal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeAuthModal()">✕</button>
+    <div class="auth-tabs"><button class="auth-tab active" id="signinTab" onclick="switchTab('signin')">Sign In</button><button class="auth-tab" id="signupTab" onclick="switchTab('signup')">Sign Up</button></div>
+    <div id="signinForm" class="auth-form"><div class="auth-logo"><img src="images/logo.png" alt="D&G Apparel" style="height:56px;width:auto;object-fit:contain;"></div><p class="auth-sub">Welcome back.</p><input type="email" placeholder="Email" class="form-input"><input type="password" placeholder="Password" class="form-input"><button class="btn-primary full-width" onclick="handleSignIn()">Sign In</button></div>
+    <div id="signupForm" class="auth-form" style="display:none"><div class="auth-logo"><img src="images/logo.png" alt="D&G Apparel" style="height:56px;width:auto;object-fit:contain;"></div><p class="auth-sub">Join us.</p><input type="text" placeholder="Full name" class="form-input"><input type="email" placeholder="Email" class="form-input"><input type="password" placeholder="Password" class="form-input"><button class="btn-primary full-width" onclick="handleSignUp()">Create Account</button></div>
+  </div>
+</div>
+
+<!-- SEARCH -->
+<div id="searchOverlay" class="search-overlay">
+  <div class="search-box"><button class="search-close" onclick="toggleSearch()">✕</button><input type="text" id="searchInput" placeholder="Search..." oninput="handleSearch(this.value)"><div id="searchResults" class="search-results"></div></div>
+</div>
+<div id="toast" class="toast"></div>
+
+<!-- NAVBAR -->
+<nav class="navbar" id="navbar">
+  <div class="nav-inner">
+    <div class="nav-left">
+      <button class="hamburger" id="hamburger" onclick="toggleMobileMenu()"><span></span><span></span><span></span></button>
+      <nav class="nav-links desktop-only">
+        <a href="index.html" class="nav-link">Home</a>
+        <a href="shop.html" class="nav-link">Shop</a>
+        <a href="collections.html" class="nav-link">Collections</a>
+        <a href="about.html" class="nav-link">About</a>
+      </nav>
+    </div>
+    <a href="index.html" class="nav-logo"><img src="images/logo.png" alt="D&G Apparel" class="nav-logo-img"></a>
+    <div class="nav-actions">
+      <button class="icon-btn" onclick="toggleSearch()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></button>
+      <button class="icon-btn" onclick="openAuthModal()" id="profileBtn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></button>
+      <button class="icon-btn cart-btn" onclick="toggleCart()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg><span class="cart-count" id="cartCount">0</span></button>
+    </div>
+  </div>
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="index.html" onclick="toggleMobileMenu()">Home</a>
+    <a href="shop.html" onclick="toggleMobileMenu()">Shop</a>
+    <a href="collections.html" onclick="toggleMobileMenu()">Collections</a>
+    <a href="orders.html" onclick="toggleMobileMenu()">Orders</a>
+    <a href="about.html" onclick="toggleMobileMenu()">About</a>
+  </div>
+</nav>
+
+<!-- PAGE HERO -->
+<div class="page-hero">
+  <h1>My <em>Orders</em></h1>
+  <p>Track, manage, and review your purchases.</p>
+</div>
+
+<!-- CHECKOUT SECTION -->
+<div id="checkoutSection" style="display:none;max-width:900px;margin:0 auto;padding:40px 24px 0;">
+  <div style="background:white;border-radius:20px;padding:32px;box-shadow:0 2px 12px rgba(0,0,0,0.06);margin-bottom:32px;">
+    <h2 style="font-size:1.3rem;margin-bottom:6px;font-weight:700;">Complete Your Order</h2>
+    <p style="color:var(--text-mid);font-size:0.85rem;margin-bottom:24px;">Fill in your delivery details below.</p>
+    <div class="checkout-grid">
+      <input type="text" placeholder="Full Name" class="form-input" style="margin:0">
+      <input type="text" placeholder="Phone Number" class="form-input" style="margin:0">
+      <input type="email" placeholder="Email Address" class="form-input" style="margin:0">
+      <input type="text" placeholder="City" class="form-input" style="margin:0">
+      <input type="text" placeholder="Street Address" class="form-input span-2" style="margin:0;grid-column:span 2">
+      <select class="form-input sort-select" style="margin:0;padding:13px 16px;height:auto;">
+        <option value="">Payment Method</option>
+        <option>Cash on Delivery</option>
+        <option>GCash</option>
+        <option>Bank Transfer</option>
+        <option>Credit / Debit Card</option>
+      </select>
+      <input type="text" placeholder="Promo Code (optional)" class="form-input" style="margin:0">
+    </div>
+    <div style="border-top:1px solid var(--border);padding-top:20px;margin-top:4px;">
+      <h3 style="font-size:1rem;font-weight:700;margin-bottom:14px;">Order Summary</h3>
+      <div id="checkoutItems"></div>
+      <div style="display:flex;justify-content:space-between;padding:8px 0 2px;font-size:0.85rem;color:var(--text-mid);"><span>Shipping</span><span style="color:var(--dark-green);font-weight:600;">FREE</span></div>
+      <div style="display:flex;justify-content:space-between;font-weight:800;font-size:1.1rem;padding-top:12px;border-top:1px solid var(--border);margin-top:8px;">
+        <span>Total</span><span style="color:var(--red)" id="checkoutTotal">₱0</span>
+      </div>
+    </div>
+    <button class="btn-primary full-width" style="margin-top:20px;padding:16px;font-size:1rem;" onclick="placeOrder()">Place Order 🛍️</button>
+    <button class="btn-outline full-width" style="margin-top:10px;" onclick="document.getElementById('checkoutSection').style.display='none'">Cancel</button>
+  </div>
+</div>
+
+<!-- TRACK SEARCH BAR -->
+<div class="track-search-wrap">
+  <div class="track-search-bar">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text-mid)" stroke-width="2" style="flex-shrink:0;"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input type="text" id="trackSearchInput" placeholder="Enter Order ID e.g. DNG-123456" class="form-input" oninput="liveSearchOrder(this.value)">
+    <button class="btn-primary" style="white-space:nowrap;" onclick="liveSearchOrder(document.getElementById('trackSearchInput').value)">Track 📍</button>
+  </div>
+</div>
+
+<!-- ORDERS LIST -->
+<div class="orders-layout" id="ordersSection">
+  <div id="ordersContainer"></div>
+</div>
+
+<!-- FOOTER -->
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <div class="footer-logo">D<span>&</span>G <small>APPAREL</small></div>
+      <p>Korean Inspired. Bangkok Styled.</p>
+      <p class="footer-tagline"><em>Express your style.</em></p>
+      <div class="social-links">
+        <a href="https://facebook.com/dgapparel" target="_blank" class="social-btn fb" title="Facebook">f</a>
+        <a href="https://instagram.com/dg.apparel" target="_blank" class="social-btn ig" title="Instagram">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" fill="none" stroke="currentColor" stroke-width="2"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5" stroke="currentColor" stroke-width="2"/></svg>
+        </a>
+        <a href="https://tiktok.com/@dg.apparel" target="_blank" class="social-btn tt" title="TikTok">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.75a8.17 8.17 0 0 0 4.79 1.53V6.83a4.85 4.85 0 0 1-1.02-.14z"/></svg>
+        </a>
+      </div>
+    </div>
+    <div class="footer-links">
+      <h4>Shop</h4>
+      <a href="shop.html">New Arrivals</a>
+      <a href="shop.html?cat=tops">Tops</a>
+      <a href="shop.html?cat=dresses">Dresses</a>
+      <a href="shop.html?cat=outerwear">Outerwear</a>
+      <a href="shop.html?cat=bestsellers">Best Sellers</a>
+    </div>
+    <div class="footer-links">
+      <h4>Help</h4>
+      <a href="orders.html">Track Order</a>
+      <a href="#">Size Guide</a>
+      <a href="#">Returns</a>
+      <a href="#">Shipping Info</a>
+      <a href="about.html">Contact Us</a>
+    </div>
+    <div class="footer-links">
+      <h4>Company</h4>
+      <a href="about.html">About Us</a>
+      <a href="#">Sustainability</a>
+      <a href="#">Careers</a>
+      <a href="#">Press</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2025 D&G Apparel. All rights reserved. · @dgapparel · @dg.apparel</p>
+  </div>
+</footer>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<script src="firebase-config.js"></script>
+
+<script src="app.js"></script>
+<script>
+let orders = JSON.parse(localStorage.getItem('dng-orders') || '[]');
+
+const TRACKER_STEPS = [
+  { key:'placed',    label:'Order Placed', icon:'📦', cls:'placed',    desc:'We received your order and are preparing it.',                     timeEst:'Confirmed' },
+  { key:'shipped',   label:'Shipped',      icon:'🚚', cls:'shipped',   desc:'Your package has left our warehouse and is on its way.',           timeEst:'Est. 1–2 days' },
+  { key:'transit',   label:'In Transit',   icon:'🚛', cls:'transit',   desc:'Your package is out for delivery in your area.',                  timeEst:'Est. 2–4 days' },
+  { key:'delivered', label:'Delivered',    icon:'✅', cls:'delivered', desc:'Your order has been delivered. Enjoy your new pieces! 💕',        timeEst:'Est. 3–5 days' },
+];
+
+function getStatusIndex(status) {
+  return TRACKER_STEPS.findIndex(s => s.key === status);
+}
+
+/* ---- MINI TRACKER (card) ---- */
+function renderTrackerHTML(currentStatus) {
+  const idx = getStatusIndex(currentStatus);
+  let html = '<div class="tracker">';
+  TRACKER_STEPS.forEach((step, i) => {
+    html += `<div class="tracker-step ${i <= idx ? step.cls : ''}">
+      <div class="tracker-icon">${step.icon}</div>
+      <div class="tracker-num">0${i+1}</div>
+      <div class="tracker-label">${step.label}</div>
+    </div>`;
+    if (i < TRACKER_STEPS.length - 1)
+      html += `<div class="tracker-line ${i < idx ? 'active' : ''}"></div>`;
+  });
+  return html + '</div>';
+}
+
+/* ---- FULL TIMELINE (modal) ---- */
+function renderTimelineHTML(order) {
+  const idx = getStatusIndex(order.status);
+  let html = '<div class="timeline">';
+  TRACKER_STEPS.forEach((step, i) => {
+    const cls = i < idx ? 'done' : i === idx ? 'active-step' : 'pending';
+    const dot = i < idx ? '✓' : step.icon;
+    html += `<div class="tl-item ${cls}">
+      <div class="tl-dot">${dot}</div>
+      <div class="tl-body">
+        <h4>${step.label}</h4>
+        <p>${step.desc}</p>
+        <div class="tl-time">${i <= idx ? step.timeEst : 'Pending'}</div>
+      </div>
+    </div>`;
+  });
+  return html + '</div>';
+}
+
+/* ---- OPEN TRACK MODAL ---- */
+function trackOrder(orderId) {
+  const order = orders.find(o => o.id === orderId);
+  if (!order) { showToast('Order not found'); return; }
+  const step = TRACKER_STEPS[getStatusIndex(order.status)];
+
+  document.getElementById('trackModalContent').innerHTML = `
+    <button class="track-modal-close" onclick="closeTrackModal()">✕</button>
+
+    <div class="track-modal-header">
+      <div class="order-tag">Tracking Details</div>
+      <h2>Order #${order.id}</h2>
+      <div class="order-meta">Placed on ${order.date} &nbsp;·&nbsp; ${order.items.reduce((s,x)=>s+x.qty,0)} item(s)</div>
+    </div>
+
+    <div class="status-banner">
+      <div class="status-banner-icon">${step ? step.icon : '📦'}</div>
+      <div class="status-banner-info">
+        <h4>${step ? step.label : 'Processing'}</h4>
+        <p>${step ? step.desc : 'Your order is being processed.'}</p>
+      </div>
+      <span class="order-status status-${order.status}">${order.statusLabel}</span>
+    </div>
+
+    <div class="track-modal-tracker">
+      ${order.status !== 'cancelled' ? renderTrackerHTML(order.status) : '<div class="cancelled-banner">❌ This order was cancelled.</div>'}
+    </div>
+
+    ${order.status !== 'cancelled' ? `<div class="tms-title">Delivery Timeline</div>${renderTimelineHTML(order)}` : ''}
+
+    <div class="tms-title">Items in This Order</div>
+    <div class="tm-items">
+      ${order.items.map(item => `
+        <div class="tm-thumb">
+          <img src="${item.img}" alt="${item.name}" onerror="this.style.background='#f5f0eb';this.removeAttribute('src');">
+          <span>${item.name}</span>
+          <strong>×${item.qty} &nbsp; ₱${(item.price*item.qty).toLocaleString()}</strong>
+        </div>`).join('')}
+    </div>
+
+    <div class="track-summary">
+      <span>${order.items.reduce((s,x)=>s+x.qty,0)} item(s) &nbsp;·&nbsp; Free Shipping</span>
+      <strong>₱${order.total.toLocaleString()}</strong>
+    </div>
+
+    <div class="tm-actions">
+      <button class="btn-outline" onclick="closeTrackModal()">Close</button>
+      <button class="btn-primary" onclick="reorder('${order.id}');closeTrackModal();">🔁 Reorder</button>
+    </div>
+  `;
+
+  document.getElementById('trackModal').classList.add('open');
+  document.getElementById('overlay').classList.add('active');
+}
+
+function closeTrackModal() {
+  document.getElementById('trackModal').classList.remove('open');
+  document.getElementById('overlay').classList.remove('active');
+}
+
+/* ---- LIVE SEARCH ---- */
+function liveSearchOrder(val) {
+  const q = val.trim().toUpperCase();
+  if (!q) { renderOrders(); return; }
+  const found = orders.filter(o => o.id.toUpperCase().includes(q));
+  if (!found.length) {
+    document.getElementById('ordersContainer').innerHTML = `
+      <div class="empty-orders">
+        <span>🔍</span>
+        <h3>No order found</h3>
+        <p>We couldn't find an order matching <strong>"${val.trim()}"</strong>.<br>Double-check the Order ID and try again.</p>
+        <button class="btn-outline" onclick="document.getElementById('trackSearchInput').value='';renderOrders();">Clear Search</button>
+      </div>`;
+  } else {
+    renderOrders(found);
+    const exact = orders.find(o => o.id.toUpperCase() === q);
+    if (exact) trackOrder(exact.id);
+  }
+}
+
+/* ---- CHECKOUT ---- */
+function renderCheckout() {
+  const section = document.getElementById('checkoutSection');
+  const itemsEl = document.getElementById('checkoutItems');
+  const totalEl = document.getElementById('checkoutTotal');
+  if (!section || cart.length === 0) return;
+  toggleCart();
+  section.style.display = 'block';
+  const subtotal = cart.reduce((s,x) => s + x.price * x.qty, 0);
+  if (totalEl) totalEl.textContent = `₱${subtotal.toLocaleString()}`;
+  if (itemsEl) {
+    itemsEl.innerHTML = cart.map(item => `
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);">
+        <div style="width:52px;height:52px;border-radius:10px;overflow:hidden;flex-shrink:0;">
+          <img src="${item.img}" alt="${item.name}" style="width:100%;height:100%;object-fit:cover;">
+        </div>
+        <div style="flex:1;">
+          <div style="font-weight:600;font-size:0.88rem;">${item.name}</div>
+          <div style="font-size:0.78rem;color:var(--text-mid);">${item.category} · Qty: ${item.qty}</div>
+        </div>
+        <span style="font-weight:700;color:var(--red);">₱${(item.price*item.qty).toLocaleString()}</span>
+      </div>`).join('');
+  }
+  section.scrollIntoView({ behavior:'smooth' });
+}
+
+/* ---- PLACE ORDER ---- */
+function placeOrder() {
+  const inputs = document.querySelectorAll('#checkoutSection .form-input');
+  if ([...inputs].slice(0,5).some(i => !i.value.trim())) {
+    showToast('Please fill in all delivery details'); return;
+  }
+  const newOrder = {
+    id: 'DNG-' + Date.now().toString().slice(-6),
+    date: new Date().toLocaleDateString('en-PH', {year:'numeric',month:'long',day:'numeric'}),
+    items: [...cart],
+    total: cart.reduce((s,x) => s + x.price * x.qty, 0),
+    status: 'placed',
+    statusLabel: 'Order Placed'
+  };
+  orders.unshift(newOrder);
+  localStorage.setItem('dng-orders', JSON.stringify(orders));
+  cart = []; saveCart(); updateCartUI();
+  document.getElementById('checkoutSection').style.display = 'none';
+  showToast('🎉 Order placed! Thank you for shopping with D&G!');
+  renderOrders();
+  setTimeout(() => trackOrder(newOrder.id), 600);
+}
+
+/* ---- CANCEL ORDER ---- */
+function cancelOrder(id) {
+  const order = orders.find(o => o.id === id);
+  if (!order) return;
+  if (order.status === 'delivered') { showToast('This order has already been delivered.'); return; }
+  if (!confirm(`Cancel order #${id}?`)) return;
+  order.status = 'cancelled';
+  order.statusLabel = 'Cancelled';
+  localStorage.setItem('dng-orders', JSON.stringify(orders));
+  showToast('Order cancelled.');
+  renderOrders();
+}
+
+/* ---- REORDER ---- */
+function reorder(id) {
+  const order = orders.find(o => o.id === id);
+  if (!order) return;
+  order.items.forEach(item => addToCart(item.id));
+  showToast('Items added to your bag! 🛍️');
+}
+
+/* ---- RENDER ORDER CARDS ---- */
+function renderOrders(list) {
+  const container = document.getElementById('ordersContainer');
+  if (!container) return;
+  const data = list !== undefined ? list : orders;
+  if (!data.length) {
+    container.innerHTML = `
+      <div class="empty-orders">
+        <span>🛍️</span>
+        <h3>No orders yet</h3>
+        <p>Start shopping to see your orders here.</p>
+        <a href="shop.html" class="btn-primary">Shop Now</a>
+      </div>`;
+    return;
+  }
+  container.innerHTML = data.map(order => `
+    <div class="order-card">
+      <div class="order-header">
+        <div>
+          <div class="order-id">Order #${order.id}</div>
+          <div class="order-date">${order.date}</div>
+        </div>
+        <span class="order-status status-${order.status}">${order.statusLabel}</span>
+      </div>
+      ${order.status !== 'cancelled' ? renderTrackerHTML(order.status) : '<div class="cancelled-banner">❌ This order was cancelled.</div>'}
+      <div class="order-items">
+        ${order.items.map(item => `
+          <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+            <div style="width:70px;height:70px;border-radius:12px;overflow:hidden;border:1px solid var(--border);">
+              <img src="${item.img}" alt="${item.name}" style="width:100%;height:100%;object-fit:cover;"
+                onerror="this.style.display='none';this.parentElement.style.background='#f5f0eb';">
+            </div>
+            <div style="font-size:0.68rem;color:var(--text-mid);text-align:center;max-width:78px;line-height:1.3;">${item.name}</div>
+          </div>`).join('')}
+      </div>
+      <div class="order-total">
+        <span>${order.items.reduce((s,x)=>s+x.qty,0)} item(s) · Free Shipping</span>
+        <strong>₱${order.total.toLocaleString()}</strong>
+      </div>
+      <div class="order-actions">
+        <button class="btn-primary" style="font-size:0.82rem;padding:9px 20px;" onclick="trackOrder('${order.id}')">📍 Track Order</button>
+        <button class="btn-outline" style="font-size:0.82rem;padding:9px 20px;" onclick="reorder('${order.id}')">🔁 Reorder</button>
+        ${order.status === 'placed' ? `<button class="btn-outline" style="font-size:0.82rem;padding:9px 20px;border-color:#e0aaaa;color:#a05050;" onclick="cancelOrder('${order.id}')">✕ Cancel</button>` : ''}
+      </div>
+    </div>`).join('');
+}
+
+/* ---- OVERRIDE closeAllModals ---- */
+const _base = window.closeAllModals;
+window.closeAllModals = function() { if(_base) _base(); closeTrackModal(); };
+
+/* ---- INIT ---- */
+document.addEventListener('DOMContentLoaded', () => {
+  renderOrders();
+  if (cart.length > 0) renderCheckout();
+});
+</script>
+</body>
+</html>
