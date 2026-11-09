@@ -6,7 +6,7 @@ Developed by **Raissel Jan H. Velasco**, an Information Technology student at Pa
 
 ---
 
-## 🚀 Features
+## Features
 
 * **Single-File Architecture:** Cleanly consolidates routing, view rendering, and form submission processing into a single maintainable entry point (`index.php` or custom file name).
 * **Built-in URL Routing:** Simple query-string based multi-page routing (`?page=home`, `?page=about`, `?page=contact`).
@@ -17,7 +17,7 @@ Developed by **Raissel Jan H. Velasco**, an Information Technology student at Pa
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 * **Backend:** PHP 8+
 * **Frontend:** HTML5, CSS3, JavaScript
@@ -25,7 +25,7 @@ Developed by **Raissel Jan H. Velasco**, an Information Technology student at Pa
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 
 ```text
 ├── index.php             # Main entry point containing routing, logic, and views
